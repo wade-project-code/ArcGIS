@@ -1,0 +1,148 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Map</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <link rel="stylesheet" href="https://js.arcgis.com/3.32/esri/css/esri.css">
+
+    <style>
+        #info {
+            top: 20px;
+            color: #444;
+            height: auto;
+            font-family: arial;
+            right: 20px;
+            margin: 5px;
+            padding: 10px;
+            position: absolute;
+            width: 100px;
+            z-index: 40;
+            border: solid 2px #666;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+
+        html,
+        body,
+        #map {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        button {
+            display: block;
+        }
+    </style>
+
+    <script src="https://js.arcgis.com/3.32/"></script>
+    <script>
+        var map, tb;
+
+        require([
+            "esri/map",
+            "esri/toolbars/draw",
+            "esri/symbols/SimpleMarkerSymbol",
+            "esri/symbols/SimpleLineSymbol",
+            "esri/symbols/PictureFillSymbol",
+            "esri/symbols/CartographicLineSymbol",
+            "esri/graphic",
+            "esri/Color",
+            "dojo/dom",
+            "dojo/on",
+            "dojo/domReady!"
+        ], function (
+            Map,
+            Draw,
+            SimpleMarkerSymbol,
+            SimpleLineSymbol,
+            PictureFillSymbol,
+            CartographicLineSymbol,
+            Graphic,
+            Color,
+            dom,
+            on
+        ) {
+            map = new Map("map", {
+                basemap: "streets",
+                center: [120.72, 23.41],
+                zoom: 6
+            });
+            map.on("load", initToolbar);
+
+            var markerSymbol = new SimpleMarkerSymbol();
+            markerSymbol.setColor(new Color("#00FFFF"));
+
+            var lineSymbol = new CartographicLineSymbol(
+                CartographicLineSymbol.STYLE_SOLID,
+                new Color([255, 0, 0]), 10,
+                CartographicLineSymbol.CAP_ROUND,
+                CartographicLineSymbol.JOIN_MITER, 5
+            );
+
+            var fillSymbol = new PictureFillSymbol(
+                "https://static.arcgis.com/images/Symbols/Shapes/BlackStarLargeB.png",
+                new SimpleLineSymbol(
+                    SimpleLineSymbol.STYLE_SOLID,
+                    new Color('#000'),
+                    1
+                ),
+                42,
+                42
+            );
+
+            function initToolbar() {
+                tb = new Draw(map);
+                tb.on("draw-end", addGraphic);
+
+                on(dom.byId("info"), "click", function (evt) {
+                    if (evt.target.id === "info") {
+                        return;
+                    }
+                    var tool = evt.target.id.toLowerCase();
+                    map.disableMapNavigation();
+                    tb.activate(tool);
+                });
+            }
+
+            function addGraphic(evt) {
+                tb.deactivate();
+                map.enableMapNavigation();
+
+                var symbol;
+                if (evt.geometry.type === "point" || evt.geometry.type === "multipoint") {
+                    symbol = markerSymbol;
+                } else if (evt.geometry.type === "line" || evt.geometry.type === "polyline") {
+                    symbol = lineSymbol;
+                }
+                else {
+                    symbol = fillSymbol;
+                }
+
+                map.graphics.add(new Graphic(evt.geometry, symbol));
+            }
+        });
+    </script>
+</head>
+
+<body>
+
+    <div id="info">
+        <button id="Point" style="width: 100px">Point</button>
+        <button id="Multipoint" style="width: 100px">Multipoint</button>
+        <button id="Line" style="width: 100px">Line</button>
+        <button id="Polyline" style="width: 100px">Polyline</button>
+        <button id="FreehandPolyline" style="width: 100px">Freehand Polyline</button>
+        <button id="Triangle" style="width: 100px">Triangle</button>
+        <button id="Extent" style="width: 100px">Rectangle</button>
+        <button id="Circle" style="width: 100px">Circle</button>
+        <button id="Ellipse" style="width: 100px">Ellipse</button>
+        <button id="Polygon" style="width: 100px">Polygon</button>
+        <button id="FreehandPolygon" style="width: 100px">Freehand Polygon</button>
+    </div>
+
+    <div id="map"></div>
+</body>
+</html>
